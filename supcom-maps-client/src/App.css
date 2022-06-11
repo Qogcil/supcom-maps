@@ -1,0 +1,36 @@
+.App {
+  	text-align: center;
+}
+
+.App-link {
+  	color: #61dafb;
+}
+
+.gallery {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.gallery-item {
+	background-color: white;
+	display: inline-block;
+	margin: 0.15rem;
+	width: 256px;
+	height: 256px;
+}
+
+.gallery-item img:hover {
+	opacity: .5;
+}
+
+.alert-shown {
+	opacity: 1;
+	transition: all 250ms linear;
+  }
+  
+.alert-hidden {
+	opacity: 0;
+	transition: all 250ms linear 2s;
+}

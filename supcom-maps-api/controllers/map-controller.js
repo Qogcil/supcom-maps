@@ -18,6 +18,15 @@ const loopFiles = async (path) => {
 	return mapFiles;
 }
 
+function chunkArray(array, size) {
+	let result = []
+	for (let i = 0; i < array.length; i += size) {
+	  let chunk = array.slice(i, i + size)
+	  result.push(chunk)
+	}
+	return result
+}
+
 //base 32 decoding and hex to decimal conversion
 const encoder = (()=>{
     const dec2hex = (s)=>{
@@ -60,14 +69,14 @@ exports.refreshMaps = async (req, res) => {
 	const mapFiles = await loopFiles(MAPS)
 	await knex('map').del();
 	mapRecords = [];
-	await mapFiles.map(async (file) => {
+	await mapFiles.map((file) => {
 		try {
 			// parse options
 			const filePath = `${file}`;
-			const seed = await file.match(/^(.*)(?:_preview\.png)/)[1];
-			const playersPerTeamOptionEncoded = await file.match(/^(?:[^_]*\_){5}(.{2})/)[1];
-			const mapSizeOptionEncoded = await file.match(/^(?:[^_]*\_){5}.{2}(.{2})/)[1];
-			const teamsOptionEncoded = await file.match(/^(?:[^_]*\_){5}.{4}(.{2})/)[1];
+			const seed = file.match(/^(.*)(?:_preview\.png)/)[1];
+			const playersPerTeamOptionEncoded = file.match(/^(?:[^_]*\_){5}(.{2})/)[1];
+			const mapSizeOptionEncoded = file.match(/^(?:[^_]*\_){5}.{2}(.{2})/)[1];
+			const teamsOptionEncoded = file.match(/^(?:[^_]*\_){5}.{4}(.{2})/)[1];
 
 			// decode options
 			const playersPerTeam = encoder.hex2dec(encoder.base32tohex(playersPerTeamOptionEncoded));
@@ -81,16 +90,18 @@ exports.refreshMaps = async (req, res) => {
 				"players_per_team": playersPerTeam,
 				"teams": teams,
 			}
-			mapRecords.push(map)
+			mapRecords.push(map);
 		} catch (err) {
 			console.log(err);
 		}
 	});
+	
+	const chunkedRecords = chunkArray(mapRecords, 500)
+	chunkedRecords.map((chunk) => {
+		return knex('map').insert(chunk).then((x) => {console.log(x)}).catch(err => {})
+	})
 
-	// split into chunks of 500
-	await knex('map').insert(mapRecords);
-
-	return res.json(mapFiles)
+	return res.json(chunkedRecords)
 }
 
 exports.mapDelete = async (req, res) => {

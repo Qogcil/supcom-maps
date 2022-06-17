@@ -28,6 +28,7 @@ const knex = require('knex')({
 		table.integer('players_per_team')
 		table.integer('teams')
 		table.boolean('is_water')
+		table.integer('likes')
 		})
 		.then(() => {
 		console.log('Table \'map\' created')

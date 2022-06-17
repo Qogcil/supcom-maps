@@ -89,6 +89,7 @@ exports.refreshMaps = async (req, res) => {
 				"map_size": mapSize,
 				"players_per_team": playersPerTeam,
 				"teams": teams,
+				"likes": 0,
 			}
 			mapRecords.push(map);
 		} catch (err) {
@@ -98,7 +99,7 @@ exports.refreshMaps = async (req, res) => {
 	
 	const chunkedRecords = chunkArray(mapRecords, 500)
 	chunkedRecords.map((chunk) => {
-		return knex('map').insert(chunk).then((x) => {console.log(x)}).catch(err => {})
+		return knex('map').insert(chunk).onConflict().ignore().then((x)=>{console.log(x)})
 	})
 
 	return res.json(chunkedRecords)
@@ -133,4 +134,24 @@ exports.mapReset = async (req, res) => {
       // Send a error message in response
       res.json({ message: `There was an error resetting map list: ${err}.` })
     })
+}
+
+exports.likeMap = async (req, res) => {
+	const {map_id} = req.params;
+
+	await knex('map').where('map_id', map_id).increment('likes', 1)
+	const [{likes: newLikes}] = await knex('map').select('likes').where('map_id', map_id)
+
+	res.json({ message: `likes count: ${newLikes}.`, likes: newLikes })
+}
+
+exports.unlikeMap = async (req, res) => {
+// Remove all map from database
+
+	const {map_id} = req.params;
+	knex
+	.select('*') // select all records
+	.from('map') // from 'map' table
+	.where('map_id', map_id) // find correct record based on id
+	.decrement('likes', 1) // increment likes by 1
 }

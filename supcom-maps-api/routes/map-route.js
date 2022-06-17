@@ -9,6 +9,8 @@ const router = express.Router()
 router.route('/').get(mapRoutes.getMaps)
 
 router.route('/refresh').get(mapRoutes.refreshMaps)
+router.route('/:map_id/like').put(mapRoutes.likeMap)
+router.route('/:map_id/unlike').put(mapRoutes.unlikeMap)
 
 // export
 module.exports = router

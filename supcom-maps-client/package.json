@@ -5,10 +5,11 @@
   "dependencies": {
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "react-window": "^1.8.7"
   },
   "scripts": {
-    "start": "PORT=9000 react-scripts start",
+    "start": "PORT=9005 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

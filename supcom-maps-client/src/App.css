@@ -14,11 +14,19 @@
 }
 
 .gallery-item {
+	position: relative;
 	background-color: white;
 	display: inline-block;
 	margin: 0.15rem;
 	width: 256px;
 	height: 256px;
+}
+
+.star {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	z-index: 100;
 }
 
 .gallery-item img:hover {

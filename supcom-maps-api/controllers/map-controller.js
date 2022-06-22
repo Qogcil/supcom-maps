@@ -146,12 +146,10 @@ exports.likeMap = async (req, res) => {
 }
 
 exports.unlikeMap = async (req, res) => {
-// Remove all map from database
-
 	const {map_id} = req.params;
-	knex
-	.select('*') // select all records
-	.from('map') // from 'map' table
-	.where('map_id', map_id) // find correct record based on id
-	.decrement('likes', 1) // increment likes by 1
+	
+	await knex('map').where('map_id', map_id).decrement('likes', 1)
+	const [{likes: newLikes}] = await knex('map').select('likes').where('map_id', map_id)
+
+	res.json({ message: `likes count: ${newLikes}.`, likes: newLikes })
 }

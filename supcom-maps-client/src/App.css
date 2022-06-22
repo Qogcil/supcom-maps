@@ -22,11 +22,24 @@
 	height: 256px;
 }
 
-.star {
+.gallery-item-star-container {
 	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	align-content: flex-start;
+	overflow: hidden;
+}
+
+.star {
+	/* position: absolute;
 	top: 0px;
 	left: 0px;
-	z-index: 100;
+	z-index: 100; */
 }
 
 .gallery-item img:hover {

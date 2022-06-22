@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 
 const Gallery = () => {
 	const [mapData, setMapData] = useState([]);
-	const [refreshCount, setRefreshCount] = useState(0);
 
 	const getMapData = async () => {
 		const mapData = await fetch('http://192.168.1.4:9006/maps')
@@ -15,15 +14,14 @@ const Gallery = () => {
 		getMapData();
 	}, []);
 
-	useEffect(() => {
-		console.log(refreshCount);
-	}, [refreshCount]);
+	// useEffect(() => {
+	// 	const newMapData = mapData.map(a => Object.assign({}, a));
+	// 	newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1);
+	// 	setMapData(newMapData => newMapData);
+	// }, [newMapData]);
 
 	const sortGallery = () => {
-		const newMapData = mapData.map(a => Object.assign({}, a));
-		newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1);
-		setMapData(newMapData);
-		setRefreshCount(refreshCount + 1);
+		setMapData(newMapData => newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1));
 		return;
 	}
 
@@ -32,8 +30,6 @@ const Gallery = () => {
 		const index = newMapData.findIndex((obj => obj.map_id == map_id));
 		newMapData[index] = {...mapItem}
 		setMapData(newMapData);
-		setRefreshCount(refreshCount + 1);
-		return;
 	}
 
 	return (
@@ -45,8 +41,8 @@ const Gallery = () => {
 
 const SVGStar = (props) => (
 	<svg
-	  width={30}
-	  height={30}
+	  width={32}
+	  height={32}
 	  viewBox="0 0 24 24"
 	  xmlns="http://www.w3.org/2000/svg"
 	  {...props}
@@ -71,26 +67,44 @@ const Map = ({map_id, file_path, seed, likes, sortGallery, modifyGalleryItem, fu
 
 	const likeMap = async () => {
 		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/like`, {method: 'PUT'}).then(response => response.json());
+		console.log(res.likes)
 		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
 		await sortGallery();
-		console.log(res.likes)
-		
 	};
 
-	const handleClick = () => {
-		// navigator.clipboard.writeText(seed);
-		likeMap();
+	const unlikeMap = async () => {
+		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/unlike`, {method: 'PUT'}).then(response => response.json());
+		console.log(res.likes)
+		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
+		await sortGallery();
 	}
+
+	const handleClick = (e) => {
+		// navigator.clipboard.writeText(seed);
+		if (e.type === 'click') {
+			likeMap();
+		} else if (e.type === 'contextmenu') {
+			e.preventDefault()
+			console.log('right click')
+			unlikeMap();
+		}
+	  };
 
 	useEffect(() => {
 		getMapPreview();
-		console.log(likes)
 	}, []);
 
 	return (
-		<div className='gallery-item' onClick={handleClick}>
+		<div className='gallery-item' onClick={handleClick} onContextMenu={handleClick}>
 			<img src={img} alt='map preview' loading='lazy'/>
-			<div className='star'>{likes > 0 ? <SVGStar /> : null}</div>
+			<div className='gallery-item-star-container'>
+				{
+					[...Array(likes)].map((i) =>
+						<div className='star'>{likes > 0 ? <SVGStar /> : null}</div>
+					)
+				}
+			</div>
+			{/* <div className='star'>{likes > 0 ? <SVGStar /> : null}</div> */}
 		</div>
 	)	
 }

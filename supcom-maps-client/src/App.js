@@ -55,7 +55,7 @@ const SVGStar = (props) => (
 	</svg>
 )
 
-const Map = ({map_id, file_path, seed, likes, sortGallery, modifyGalleryItem, fullMap}) => {
+const Map = ({map_id, file_path, seed, map_size, likes, players_per_team, teams, sortGallery, modifyGalleryItem, fullMap}) => {
 	const [img, setImg] = useState();
 
 	const getMapPreview = async () => {
@@ -69,14 +69,14 @@ const Map = ({map_id, file_path, seed, likes, sortGallery, modifyGalleryItem, fu
 		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/like`, {method: 'PUT'}).then(response => response.json());
 		console.log(res.likes)
 		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
-		await sortGallery();
+		//await sortGallery();
 	};
 
 	const unlikeMap = async () => {
 		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/unlike`, {method: 'PUT'}).then(response => response.json());
 		console.log(res.likes)
 		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
-		await sortGallery();
+		//await sortGallery();
 	}
 
 	const handleClick = (e) => {
@@ -94,16 +94,26 @@ const Map = ({map_id, file_path, seed, likes, sortGallery, modifyGalleryItem, fu
 		getMapPreview();
 	}, []);
 
+	const MapInfoText = () => {
+		const players_per_team_actual = players_per_team/2;
+		const teamSetup = `${players_per_team_actual}`+`v${players_per_team_actual}`.repeat(teams-1);
+		return <div className='map-size'>{teamSetup} {map_size}x{map_size}</div>
+	}
+
 	return (
 		<div className='gallery-item' onClick={handleClick} onContextMenu={handleClick}>
 			<img src={img} alt='map preview' loading='lazy'/>
-			<div className='gallery-item-star-container'>
+			<div className='gallery-item-container'>
+				<div className='gallery-item-star-container'>
 				{
-					[...Array(likes)].map((i) =>
+					[...Array(likes > 0 ? likes : 0)].map((i) =>
 						<div className='star'>{likes > 0 ? <SVGStar /> : null}</div>
 					)
 				}
+				</div>
+				<MapInfoText />
 			</div>
+			
 			{/* <div className='star'>{likes > 0 ? <SVGStar /> : null}</div> */}
 		</div>
 	)	

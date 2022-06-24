@@ -57,6 +57,7 @@ exports.getMaps = async (req, res) => {
   	knex
     .select('*')
     .from('map')
+	.orderBy('likes', 'desc')
     .then(mapData => {
       res.json(mapData)
     })

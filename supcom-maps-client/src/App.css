@@ -1,5 +1,8 @@
 .App {
-  	text-align: center;
+  	/* text-align: center; */
+	float:left;
+	clear:none;  
+	font-size: 0;
 }
 
 .App-link {
@@ -8,16 +11,16 @@
 
 .gallery {
 	display: flex;
-	flex-direction: row;
+	/* flex-direction: row;
 	flex-wrap: wrap;
-	justify-content: center;
+	justify-content: center; */
 }
 
 .gallery-item {
 	position: relative;
 	background-color: white;
 	display: inline-block;
-	margin: 0.15rem;
+	/* padding: 0.15rem; */
 	width: 256px;
 	height: 256px;
 }
@@ -43,10 +46,10 @@
 }
 
 .star {
-	/* position: absolute;
+	position: absolute;
 	top: 0px;
 	left: 0px;
-	z-index: 100; */
+	z-index: 100;
 }
 
 .gallery-item img:hover {

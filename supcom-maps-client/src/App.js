@@ -1,41 +1,87 @@
 import './App.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
+import memoize from 'memoize-one';
+import { FixedSizeGrid as Grid, areEqual } from 'react-window';
+
+const createItemData = memoize((items, toggleItemActive) => ({
+	items,
+	toggleItemActive,
+}));
+
+const getMapsData = async () => {
+	return fetch('http://192.168.1.4:9006/maps').then(res => res.json());
+}
+
+const getMapData = async (map_id) => {
+	return fetch(`http://192.168.1.4:9006/maps/${map_id}`).then(res => res.json());
+}
+
+const sortMapData = (mapData) => {
+	const newMapData = mapData.map(a => Object.assign({}, a));
+	newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1)
+	return newMapData
+}
+
+const modifyGalleryItem = (map_id, mapItem, mapData) => {
+	const newMapData = mapData.map(a => Object.assign({}, a));
+	const index = newMapData.findIndex((obj => obj.map_id == map_id));
+	newMapData[index] = {...mapItem}
+	return newMapData;
+}
+
+const getMapPreview = async (file_path) => {
+	const imageBlob = await fetch(`http://192.168.1.4:9006/previews/${file_path}`).then(res => res.blob());
+	const imageObjectURL = URL.createObjectURL(imageBlob);
+	return imageObjectURL;
+};
+
+const likeMap = async (map_id) => {
+	const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/like`, {method: 'PUT'}).then(res => res.json());
+	return res.likes
+};
+
+const unlikeMap = async (map_id) => {
+	const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/unlike`, {method: 'PUT'}).then(res => res.json());
+	return res.likes
+}
+
 
 const Gallery = () => {
-	const [mapData, setMapData] = useState([]);
-
-	const getMapData = async () => {
-		const mapData = await fetch('http://192.168.1.4:9006/maps')
-		.then(response => response.json())
-		return setMapData(mapData);
-	}
+	const [mapsData, setMapsData] = useState([]);
 
 	useEffect(() => {
-		getMapData();
+		(async () => {
+			const data = await getMapsData(1);
+			setMapsData(data);
+		 })();
 	}, []);
 
-	// useEffect(() => {
-	// 	const newMapData = mapData.map(a => Object.assign({}, a));
-	// 	newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1);
-	// 	setMapData(newMapData => newMapData);
-	// }, [newMapData]);
+	const Cell = memo(({ data, columnIndex, rowIndex, style }) => {
+		const index = 6*rowIndex + columnIndex;
+		const item = data[index];
+		return (
+			<Map map={item}/>
+		);
+	}, areEqual);
 
-	const sortGallery = () => {
-		setMapData(newMapData => newMapData.sort((a, b) => a.likes < b.likes ? 1 : -1));
-		return;
-	}
-
-	const modifyGalleryItem = (map_id, mapItem) => {
-		const newMapData = mapData.map(a => Object.assign({}, a));
-		const index = newMapData.findIndex((obj => obj.map_id == map_id));
-		newMapData[index] = {...mapItem}
-		setMapData(newMapData);
-	}
+	const mapsCount = mapsData.length;
+	const rowCount = Math.ceil(mapsCount/6);
+	const columnCount = 6;
+	console.log(mapsCount, rowCount, columnCount)
 
 	return (
-		<div className="gallery">
-				{mapData.map(map => {return <Map key={map.map_id} {...map} sortGallery={sortGallery} modifyGalleryItem={modifyGalleryItem} fullMap={map}/>})}
-		</div>
+		<Grid
+			columnCount={columnCount}
+			columnWidth={256}
+			height={900}
+			rowCount={rowCount}
+			rowHeight={256}
+			width={1920}
+			itemCount={mapsCount}
+			itemData={mapsData}
+		>
+		  {Cell}
+		</Grid>
 	)
 }
 
@@ -55,105 +101,58 @@ const SVGStar = (props) => (
 	</svg>
 )
 
-const Map = ({map_id, file_path, seed, map_size, likes, players_per_team, teams, sortGallery, modifyGalleryItem, fullMap}) => {
-	const [img, setImg] = useState();
+const Map = ({map}) => {
+	const [mapPreview, setMapPreview] = useState();
 
-	const getMapPreview = async () => {
-		const res = await fetch(`http://192.168.1.4:9006/previews/${file_path}`);
-		const imageBlob = await res.blob();
-		const imageObjectURL = URL.createObjectURL(imageBlob);
-		setImg(imageObjectURL);
-	};
-
-	const likeMap = async () => {
-		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/like`, {method: 'PUT'}).then(response => response.json());
-		console.log(res.likes)
-		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
-		//await sortGallery();
-	};
-
-	const unlikeMap = async () => {
-		const res = await fetch(`http://192.168.1.4:9006/maps/${map_id}/unlike`, {method: 'PUT'}).then(response => response.json());
-		console.log(res.likes)
-		await modifyGalleryItem(map_id, {...fullMap, likes: res.likes});
-		//await sortGallery();
-	}
+	useEffect(() => {
+		(async () => {
+			const img = await getMapPreview(map.file_path);
+			setMapPreview(img);
+		 })();
+	}, []);
 
 	const handleClick = (e) => {
 		// navigator.clipboard.writeText(seed);
 		if (e.type === 'click') {
-			likeMap();
+			likeMap(map.map_id);
 		} else if (e.type === 'contextmenu') {
 			e.preventDefault()
 			console.log('right click')
-			unlikeMap();
+			unlikeMap(map.map_id);
 		}
-	  };
+		const refreshedMap = getMapData(map.map_id);
+	};
 
-	useEffect(() => {
-		getMapPreview();
-	}, []);
-
-	const MapInfoText = () => {
+	const MapInfoText = ({players_per_team}) => {
 		const players_per_team_actual = players_per_team/2;
-		const teamSetup = `${players_per_team_actual}`+`v${players_per_team_actual}`.repeat(teams-1);
-		return <div className='map-size'>{teamSetup} {map_size}x{map_size}</div>
+		const teamSetup = `${players_per_team_actual}`+`v${players_per_team_actual}`.repeat(map.teams-1);
+		return <div className='map-size'>{teamSetup} {map.map_size}x{map.map_size}</div>
 	}
 
 	return (
 		<div className='gallery-item' onClick={handleClick} onContextMenu={handleClick}>
-			<img src={img} alt='map preview' loading='lazy'/>
+			<img src={mapPreview} alt='map preview' loading='lazy'/>
 			<div className='gallery-item-container'>
 				<div className='gallery-item-star-container'>
 				{
-					[...Array(likes > 0 ? likes : 0)].map((i) =>
-						<div className='star'>{likes > 0 ? <SVGStar /> : null}</div>
+					[...Array(map.likes > 0 ? map.likes : 0)].map((i) =>
+						<div className='star'>{map.likes > 0 ? <SVGStar /> : null}</div>
 					)
 				}
 				</div>
-				<MapInfoText />
+				<MapInfoText players_per_team={map.players_per_team} />
 			</div>
-			
-			{/* <div className='star'>{likes > 0 ? <SVGStar /> : null}</div> */}
 		</div>
 	)	
 }
 
-const CopiedMessage = ({x, y, isShowingAl}) => {
-	return(
-		<div style={{"position": "fixed", "top": y, "left": x }}>
-			<p>Copied to clipboard!</p>
-		</div>
-	)
-}
-
 function App() {
-
-	const [x, setX] = useState()
-	const [y, setY] = useState()
-
-	useEffect(
-		() => {
-		const update = (e) => {
-			setX(e.x)
-			setY(e.y)
-		}
-		window.addEventListener('mousemove', update)
-		window.addEventListener('touchmove', update)
-		return () => {
-			window.removeEventListener('mousemove', update)
-			window.removeEventListener('touchmove', update)
-		}
-		},
-		[setX, setY]
-  	)
 	
 	return (
 		<div className="App">
 			<div>
 				<Gallery />
 			</div>
-			{/* <CopiedMessage x={x} y={y} /> */}
 		</div>
 	);
 }

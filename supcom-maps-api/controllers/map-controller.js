@@ -66,6 +66,19 @@ exports.getMaps = async (req, res) => {
     })
 }
 
+exports.getMap = async (req, res) => {
+	knex
+  .select('*')
+  .from('map')
+  .where('map_id', req.params.map_id)
+  .then(mapData => {
+	res.json(mapData[0])
+  })
+  .catch(err => {
+	res.json({ message: `There was an error retrieving map: ${err}` })
+  })
+}
+
 exports.refreshMaps = async (req, res) => {
 	const mapFiles = await loopFiles(MAPS)
 	await knex('map').del();

@@ -57,25 +57,28 @@ const Gallery = () => {
 	}, []);
 
 	const Cell = memo(({ data, columnIndex, rowIndex, style }) => {
-		const index = 6*rowIndex + columnIndex;
+		const index = 7*rowIndex + columnIndex;
 		const item = data[index];
+		// if (isScrolling) return <div style={style}></div>
 		return (
-			<Map map={item}/>
+			<Map map={item} style={style}/>
 		);
 	}, areEqual);
 
 	const mapsCount = mapsData.length;
 	const rowCount = Math.ceil(mapsCount/6);
-	const columnCount = 6;
+	const columnCount = 7;
 	console.log(mapsCount, rowCount, columnCount)
 
 	return (
 		<Grid
+			useIsScrolling={true}
+			overscanRowCount={4}
 			columnCount={columnCount}
-			columnWidth={256}
+			columnWidth={260}
 			height={900}
 			rowCount={rowCount}
-			rowHeight={256}
+			rowHeight={260}
 			width={1920}
 			itemCount={mapsCount}
 			itemData={mapsData}
@@ -101,7 +104,7 @@ const SVGStar = (props) => (
 	</svg>
 )
 
-const Map = ({map}) => {
+const Map = ({map, style}) => {
 	const [mapPreview, setMapPreview] = useState();
 
 	useEffect(() => {
@@ -130,7 +133,7 @@ const Map = ({map}) => {
 	}
 
 	return (
-		<div className='gallery-item' onClick={handleClick} onContextMenu={handleClick}>
+		<div style={style} className='gallery-item' onClick={handleClick} onContextMenu={handleClick}>
 			<img src={mapPreview} alt='map preview' loading='lazy'/>
 			<div className='gallery-item-container'>
 				<div className='gallery-item-star-container'>
